@@ -1,0 +1,52 @@
+# Servicio de Cloud Run para la Capa Nube del Agente OS.
+# Reemplaza PROJECT_ID y REGION antes de aplicar:
+#   gcloud run services replace deploy/cloudrun/service.yaml --region REGION
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: agente-os-cloud
+  labels:
+    proyecto: agente-os
+    fase: "2"
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "3"
+    spec:
+      serviceAccountName: agente-os-run@PROJECT_ID.iam.gserviceaccount.com
+      containerConcurrency: 20
+      timeoutSeconds: 120
+      containers:
+        - image: REGION-docker.pkg.dev/PROJECT_ID/agente-os/agente-os-cloud:1.0.0
+          ports:
+            - containerPort: 8000
+          env:
+            - name: CLAUDE_MODEL
+              value: claude-opus-5-5
+            - name: CLAUDE_EFFORT
+              value: low
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: anthropic-api-key
+                  key: latest
+            - name: AGENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: agent-token
+                  key: latest
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          startupProbe:
+            httpGet:
+              path: /health
+            periodSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+            periodSeconds: 30

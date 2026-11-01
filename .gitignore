@@ -1,0 +1,24 @@
+# Secretos
+.env
+backend/.env
+
+# Artefactos generados en el build de Docker
+backend/model/model.pkl
+backend/model/metrics.json
+backend/model/risk_dataset.csv
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate
+build/
+
+# macOS
+.DS_Store

@@ -1,0 +1,23 @@
+name: Backend CI
+
+on:
+  push:
+    paths: ["backend/**", "docker-compose.yml", ".github/workflows/backend-ci.yml"]
+  pull_request:
+    paths: ["backend/**", "docker-compose.yml"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir la imagen
+        run: docker compose build
+      - name: Pruebas dentro del contenedor
+        run: docker compose run --rm -e CLAUDE_MOCK=1 backend pytest -v -p no:cacheprovider
+      - name: Prueba de humo
+        run: |
+          docker compose up -d
+          for i in $(seq 1 20); do curl -fsS http://localhost:8000/health && break; sleep 2; done
+          ./backend/scripts/smoke_test.sh
+          docker compose down
